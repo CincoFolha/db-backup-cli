@@ -1,0 +1,66 @@
+databases:
+  # MySQL Example
+  mysql_production:
+    type: mysql
+    host: mysql.example.com
+    port: 3306
+    username: backup_user
+    password: ${DB_MYSQL_PASSWORD}
+    database: production_db
+    additional_params:
+      charset: utf8mb4
+      ssl: true
+      
+  # PostgreSQL Example
+  postgres_app:
+    type: postgresql
+    host: postgres.example.com
+    port: 5432
+    username: postgres
+    password: ${DB_POSTGRES_PASSWORD}
+    database: app_database
+    additional_params:
+      sslmode: require
+      
+  # MongoDB Example
+  mongo_analytics:
+    type: mongodb
+    host: mongo.example.com
+    port: 27017
+    username: admin
+    password: ${DB_MONGO_PASSWORD}
+    database: analytics
+    additional_params:
+      authSource: admin
+      replicaSet: rs0
+      
+  # SQLite Example
+  sqlite_local:
+    type: sqlite
+    database: /path/to/database.db
+
+# Backup schedules
+schedules:
+  - name: "Daily Full Backup - MySQL"
+    cron: "0 2 * * *"  # 2 AM diariamente
+    database: mysql_production
+    type: full
+    storage: s3
+    compression: gzip
+    enabled: true
+    
+  - name: "Hourly Incremental - PostgreSQL"
+    cron: "0 * * * *"  # A cada hora
+    database: postgres_app
+    type: incremental
+    storage: local
+    compression: gzip
+    enabled: true
+    
+  - name: "Weekly Full Backup - MongoDB"
+    cron: "0 3 * * 0"  # Domingo às 3 AM
+    database: mongo_analytics
+    type: full
+    storage: gcs
+    compression: bz2
+    enabled: true

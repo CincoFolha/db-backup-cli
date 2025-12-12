@@ -1,0 +1,48 @@
+
+backup:
+  default_type: full
+  compression: gzip
+  retention_days: 30
+  temp_directory: /tmp/dbbackup
+
+storage:
+  default: local
+
+  local:
+    base_path: ./backups
+    create_subdirs: true
+
+  s3:
+    bucket: ${S3_BUCKET_NAME}
+    region: ${AWS_DEFAULT_REGION}
+    prefix: backups/
+    storage_class: STANDARD_IA
+
+  gcs:
+    bucket: ${GCS_BUCKET_NAME}
+    credentials_path: ${GCS_CREDENTIALS_PATH}
+    prefix: backups/
+    
+  azure:
+    connection_string: ${AZURE_STORAGE_CONNECTION_STRING}
+    container: ${AZURE_CONTAINER_NAME}
+    prefix: backups
+
+notifications:
+  enabled: true
+  
+  slack:
+    webhook_url: ${SLACK_WEBHOOK_URL}
+    channel: ${SLACK_CHANNEL}
+    notify_on:
+      - failure
+      - success  # Comentar para notificar só em falhas
+    include_metrics: true
+
+logging:
+  level: INFO
+  format: json  # json ou text
+  file: ${LOG_FILE_PATH}
+  rotation: 10 MB
+  retention: 30 days
+  console: true

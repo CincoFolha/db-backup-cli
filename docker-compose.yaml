@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  dbbackup:
+    build: .
+    container_name: dbbackup-cli
+    volumes:
+      - ./backups:/backups
+      - ./logs:/logs
+      - ./config:/config
+      - ~/.aws:/root/.aws:ro  # AWS credentials
+    environment:
+      - LOG_LEVEL=INFO
+    env_file:
+      - .env
+    command: schedule --config /config/databases.yaml --daemon
