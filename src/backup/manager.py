@@ -28,7 +28,7 @@ class BackupManager:
             self.database.connect()
 
             if not output_path:
-                timestamp = datetime.utcnow().strtime('%Y%m%d_%H%M%S')
+                timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
                 filename  = f"{self.db_config.database}_{backup_type}_{timestamp}.sql"
                 output_path = Path("backups") / filename
                 output_path.parent.mkdir(exist_ok=True)
