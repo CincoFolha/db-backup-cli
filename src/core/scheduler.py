@@ -1,7 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 import time
 
 from src.core.config import ConfigManager
@@ -47,7 +47,7 @@ class BackupScheduler:
 
             backup_manager = BackupManager(
                 db_config,
-                storage_type=schedule.get('storage', 'local')
+                storage_type=schedule.get('storage', 'local'),
                 compression=schedule.get('compression', 'gzip')
             )
 
@@ -126,14 +126,28 @@ class BackupScheduler:
         print(f"\n⏰ Próximas {limit} Execuções:\n")
 
         jobs_with_next_run = [
-            (job, job.next_run_time) for job in jobs if job.next_run_time
+            (job, job.next_run_time) 
+            for job in jobs 
+            if getattr(job, "next_run_time", None) is not None
         ]
+
+        if not jobs_with_next_run:
+            print("Nenhuma execução futura calculada ainda")
+            return
+
         jobs_with_next_run.sort(key=lambda x: x[1])
 
         for job, next_run in jobs_with_next_run[:limit]:
-            time_diff = next_run - datetime.now(next_run.tzinfo)
-            hours = int(time_diff.total_seconds() / 3600)
-            minutes = int((time_diff.total_seconds() % 3600) / 60)
+            if next_run.tzinfo:
+                now = datetime.now(next_run.tzinfo)
+            else:
+                now = datetime.now()
+
+            time_diff = next_run - now
+            total_seconds = int(time_diff.total_seconds())
+
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
 
             print(f"  • {job.name}")
             print(f"    {next_run.strftime('%Y-%m-%d %H:%M:%S')} "
