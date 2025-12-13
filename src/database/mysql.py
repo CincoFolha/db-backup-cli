@@ -19,7 +19,7 @@ class MySQLBackup(DatabaseBackupBase):
                 host=self.config.host,
                 port=self.config.port,
                 user=self.config.username,
-                password=self.consig.password,
+                password=self.config.password,
                 database=self.config.database,
                 charset="utf8mb4",
                 **(self.config.additional_params or {})
