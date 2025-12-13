@@ -69,6 +69,6 @@ class RestoreManager:
             raise
         finally:
             if temp_file and os.path.exists(temp_file.name):
-                os.unlink(temp.file.name)
+                os.unlink(temp_file.name)
             self.database.disconnect()
 
