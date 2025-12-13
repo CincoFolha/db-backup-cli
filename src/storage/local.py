@@ -17,7 +17,7 @@ class LocalStorage(StorageBase):
         self.base_path = Path(config.config.get('base_path', '/backups'))
         self.base_path.mkdir(parents=True, exist_ok=True)
 
-    def upload(sefl, local_path: str, remote_path: str) -> bool:
+    def upload(self, local_path: str, remote_path: str) -> bool:
         try:
             dest_path = self.base_path / remote_path
             dest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -76,7 +76,7 @@ class LocalStorage(StorageBase):
     def exists(self, remote_path: str) -> bool:
         return (self.base_path / remote_path).exists()
 
-    def get_file_info(self. remote_path: str) -> Optional[StoredFile]:
+    def get_file_info(self, remote_path: str) -> Optional[StoredFile]:
         file_path = self.base_path / remote_path
 
         if not file_path.exists():

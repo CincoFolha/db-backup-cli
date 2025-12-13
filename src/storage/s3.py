@@ -62,14 +62,14 @@ class S3Storage(StorageBase):
         except ClientError as e:
             raise RuntimeError(f"Erro ao deletar do S3: {str(e)}")
 
-    def list_files(self, prefix: Optional[str] = None) -> List[StoredList]:
+    def list_files(self, prefix: Optional[str] = None) -> List[StoredFile]:
         try:
             list_prefix = f"{self.prefix}{prefix or ''}".lstrip('/')
 
-            response = self.s3_client.list_objects_v2 {
+            response = self.s3_client.list_objects_v2(
                 Bucket=self.bucket_name,
                 Prefix=list_prefix
-            }
+            )
 
             files = []
             for obj in response.get('Contents', []):
