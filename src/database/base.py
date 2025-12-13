@@ -24,7 +24,8 @@ class BackupMetadata:
     backup_type: BackupType
     timestamp: str
     size_bytes: int
-    checksum: bool
+    checksum: str
+    compressed: bool
     compression_type: Optional[str]
     storage_location: str
 
