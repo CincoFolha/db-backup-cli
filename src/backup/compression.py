@@ -43,7 +43,7 @@ class CompressionManager:
         return self.decompressors[compression_type](input_path, output_path)
 
     def _compress_gzip(self, input_path: str, output_path: str) -> str:
-        with open(input_paht, 'rb') as f_in:
+        with open(input_path, 'rb') as f_in:
             with gzip.open(output_path, 'wb', compresslevel=6) as f_out:
                 f_out.writelines(f_in)
         return output_path
