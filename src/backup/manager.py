@@ -1,3 +1,4 @@
+import re
 from typing import Optional, List
 from pathlib import Path
 import os
@@ -29,7 +30,7 @@ class BackupManager:
 
             if not output_path:
                 timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-                filename  = f"{self.db_config.database}_{backup_type}_{timestamp}.sql"
+                filename  = f"{self.db_config.database}-{backup_type}-{timestamp}.sql"
                 output_path = Path("backups") / filename
                 output_path.parent.mkdir(exist_ok=True)
 
@@ -64,5 +65,54 @@ class BackupManager:
     @staticmethod
     def list_backups(database: Optional[str] = None, limit: int = 10) -> List[BackupMetadata]:
         """Lista backups disponíveis"""
-        # Implementação para listar backups do storage/logs
-        pass
+        logger = BackupLogger()        
+        logger.info(f"Iniciando listagem de backups (database='{database or 'todos'}', limit={limit})")
+
+        search_path = Path("./backups")
+        if database:
+            search_path = search_path / database
+        backups = []
+
+        if not search_path.exists():
+            logger.warning(f"Diretório de backups não encontrado: {search_path}")
+            return backups
+
+        pattern = re.compile(
+            r"^([^-]+)-([^-]+)-(\d{8})_(\d{6})\.([^.]+)(\.gz|\.zip)?$"
+        )
+
+        for file_path in search_path.iterdir():
+            if not file_path.is_file():
+                continue
+
+            match = pattern.match(file_path.name)
+            if not match:
+                continue
+
+            db_name, backup_type_str, date_str, _, _, compression_ext = match.groups()
+            
+            if database and db_name != database:
+                continue
+
+            try:
+                timestamp = datetime.strptime(date_str, "%Y%m%d").strftime("%d/%m/%Y")
+            except ValueError:
+                continue
+
+            compressed = bool(compression_ext)
+
+            backups.append(BackupMetadata(
+                database_name=db_name,
+                backup_type=BackupType(backup_type_str),
+                timestamp=timestamp,
+                size_bytes=file_path.stat().st_size,
+                checksum="",
+                compressed=compressed,
+                compression_type=compression_ext.lstrip(".") if compressed else "",
+                storage_location=str(file_path.parent)
+            ))
+
+        backups.sort(key=lambda b: datetime.strptime(b.timestamp, "%d/%m/%Y"), reverse=True)
+        logger.info(f"Listagem concluida: {len(backups)} backup(s) encontrado(s)")
+
+        return backups[:limit]
