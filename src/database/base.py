@@ -12,11 +12,11 @@ class BackupType(Enum):
 class DatabaseConfig:
     db_type: str
     host: str
-    port: str
+    port: int
     username: str
     password: str
     database: str
-    additional_params: Dict[str, Any] = None
+    additional_params: Optional[Dict[str, Any]] = field(default_factory=dict)
 
 @dataclass
 class BackupMetadata:

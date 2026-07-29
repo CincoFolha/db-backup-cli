@@ -36,19 +36,19 @@ class MySQLBackup(DatabaseBackupBase):
                 cursor.execute("SELECT VERSION()")
                 version = cursor.fetchone()[0]
 
-                cursor.execute(f"""
+                cursor.execute("""
                     SELECT
                         SUM(data_length + index_length) / 1024 / 1024 as size_mb
                     FROM information_schema.TABLES
-                    WHERE table_schema = '{self.config.database}'
-                """)
+                    WHERE table_schema = %s
+                """, (self.config.database,))
                 size_mb = cursor.fetchone()[0] or 0
 
-                cursor.execute(f"""
+                cursor.execute("""
                     SELECT COUNT(*)
                     FROM information_schema.TABLES
-                    WHERE table_schema = '{self.config.database}'
-                """)
+                    WHERE table_schema = %s
+                """, (self.config.database,))
                 table_count = cursor.fetchone()[0]
 
             return {
@@ -98,16 +98,17 @@ class MySQLBackup(DatabaseBackupBase):
 
             cmd.append(self.config.database)
 
-            with open(output_path, 'w') as f:
+            with open(output_path, 'wb') as f:
                 result = subprocess.run(
                     cmd,
                     stdout=f,
                     stderr=subprocess.PIPE,
-                    text=True
+                    text=False
                 )
 
             if result.returncode != 0:
-                raise RuntimeError(f"mysqldump falhou: {result.stderr}")
+                error_msg = result.stderr.decode('utf-8', errors='replace')
+                raise RuntimeError(f"mysqldump falhou: {error_msg}")
 
             sha256_hash = hashlib.sha256()
             with open(output_path, 'rb') as f:
@@ -144,16 +145,17 @@ class MySQLBackup(DatabaseBackupBase):
                 target_db
             ]
 
-            with open(backup_path, 'r') as f:
+            with open(backup_path, 'rb') as f:
                 result = subprocess.run(
                     cmd,
                     stdin=f,
                     stderr=subprocess.PIPE,
-                    text=True
+                    text=False
                 )
 
             if result.returncode != 0:
-                raise RuntimeError(f"Restore falhou: {result.stderr}")
+                error_msg = result.stderr.decode('utf-8', errors='replace')
+                raise RuntimeError(f"Restore falhou: {error_msg}")
             
             return True
         except Exception as e:
@@ -163,11 +165,11 @@ class MySQLBackup(DatabaseBackupBase):
         try:
             self.connect()
             with self.connection.cursor() as cursor:
-                cursor.execute(f"""
+                cursor.execute("""
                     SELECT SUM(data_length + index_length)
                     FROM information_schema.TABLES
-                    WHERE table_schema = '{self.config.database}'
-                """)
+                    WHERE table_schema = %s
+                """, (self.config.database,))
                 size_bytes = cursor.fetchone()[0] or 0
             return int(size_bytes)
         finally:
@@ -177,7 +179,8 @@ class MySQLBackup(DatabaseBackupBase):
         try:
             self.connect()
             with self.connection.cursor() as cursor:
-                cursor.execute(f"SHOW TABLES FROM {self.config.database}")
+                sanitized_db = self.config.database.replace("`", "``")
+                cursor.execute(f"SHOW TABLES FROM `{sanitized_db}`")
                 tables = [row[0] for row in cursor.fetchall()]
             return tables
         finally:
